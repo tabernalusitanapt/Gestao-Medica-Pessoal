@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#033335">
+    <meta name="description" content="A sua saúde, organizada. Registe consultas, exames, receitas e despesas num só lugar.">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="./assets/ocr/tesseract.min.js" defer></script>
+    <title>Gestão Médica Pessoal</title>
+  </head>
+  <body>
+    <div id="lock-screen" class="lock-screen">
+      <form id="pin-form" class="pin-card">
+        <img src="./app-icon.svg" class="lock-logo" alt="">
+        <p class="eyebrow">O seu espaço de saúde</p>
+        <h1>Gestão Médica Pessoal</h1>
+        <p id="pin-prompt" class="muted">Defina um PIN de 6 dígitos para proteger os seus registos.</p>
+        <label for="pin-input">PIN de 6 dígitos</label>
+        <input id="pin-input" name="pin" inputmode="numeric" autocomplete="current-password" type="password" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
+        <div id="pin-confirm-wrap">
+          <label for="pin-confirm">Confirme o PIN</label>
+          <input id="pin-confirm" name="pin-confirm" inputmode="numeric" autocomplete="new-password" type="password" pattern="[0-9]{6}" minlength="6" maxlength="6">
+        </div>
+        <p id="pin-error" class="form-error" role="alert"></p>
+        <button class="button button-primary button-wide" type="submit" id="pin-submit">Criar espaço protegido</button>
+        <p class="pin-note">A sua informação fica cifrada neste dispositivo. Sem o PIN, não é possível abrir as cópias de segurança.</p>
+      </form>
+    </div>
+
+    <div id="app" class="app-shell hidden">
+      <aside class="sidebar">
+        <a class="brand" href="#inicio" data-page="inicio">
+          <img src="./app-icon.svg" alt="" class="brand-icon">
+          <span>Gestão Médica<small>PESSOAL</small></span>
+        </a>
+        <nav class="side-nav" aria-label="Menu principal">
+          <button class="nav-item active" data-page="inicio"><span class="nav-icon">⌂</span>Início</button>
+          <button class="nav-item" data-page="registos"><span class="nav-icon">▤</span>Registos</button>
+          <button class="nav-item" data-page="despesas"><span class="nav-icon">€</span>Despesas</button>
+          <button class="nav-item" data-page="relatorios"><span class="nav-icon">▥</span>Relatórios</button>
+          <button class="nav-item" data-page="perfis"><span class="nav-icon">♙</span>Perfis</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="privacy-note"><span class="privacy-dot"></span><span>Os seus dados ficam cifrados neste dispositivo.</span></div>
+          <button class="nav-item" data-page="definicoes"><span class="nav-icon">⚙</span>Definições</button>
+          <p class="sidebar-caption">FEITO PARA CUIDAR DE SI</p>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="topbar-heading">
+            <p class="eyebrow" id="page-eyebrow">O SEU ESPAÇO DE SAÚDE</p>
+            <h1 id="page-title">Início</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="button button-primary top-add" data-action="new-record"><span>＋</span> Novo registo</button>
+            <button class="avatar-button" data-page="perfis" aria-label="Abrir perfis">?</button>
+          </div>
+        </header>
+        <div class="content-area" id="page-content"></div>
+      </main>
+
+      <nav class="mobile-nav" aria-label="Menu principal">
+        <button class="mobile-nav-item active" data-page="inicio"><span>⌂</span>Início</button>
+        <button class="mobile-nav-item" data-page="registos"><span>▤</span>Registos</button>
+        <button class="mobile-nav-item" data-page="despesas"><span>€</span>Despesas</button>
+        <button class="mobile-nav-item" data-page="relatorios"><span>▥</span>Relatórios</button>
+        <button class="mobile-nav-item" data-page="perfis"><span>♙</span>Perfis</button>
+        <button class="mobile-nav-item" data-page="definicoes"><span>⚙</span>Definições</button>
+      </nav>
+    </div>
+
+    <dialog id="record-dialog" class="modal-dialog">
+      <form id="record-form" class="modal-card">
+        <div class="modal-heading">
+          <div><p class="eyebrow">O SEU HISTORIAL</p><h2 id="record-dialog-title">Novo registo</h2></div>
+          <button type="button" class="icon-button" data-action="close-dialog" aria-label="Fechar">×</button>
+        </div>
+        <label for="record-title" id="record-title-label">Nome do registo *</label>
+        <input id="record-title" name="title" maxlength="100" placeholder="Ex.: Consulta de cardiologia ou nome do fármaco" required>
+        <div class="form-row">
+          <div><label for="record-type">Tipo</label><select id="record-type" name="type"><option>Consulta</option><option>Exame</option><option>Análise</option><option>Receita</option><option>Medicamento</option><option>Despesa</option></select></div>
+          <div><label for="record-status">Estado</label><select id="record-status" name="status"><option value="Agendado">Agendado</option><option value="Por realizar">Por realizar</option><option value="Concluído">Concluído</option></select></div>
+        </div>
+        <div class="form-row">
+          <div><label for="record-date">Data (DD/MM/AAAA) *</label><input id="record-date" name="date" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/AAAA" maxlength="10" pattern="(?:0[1-9]|[12][0-9]|3[01])/(?:0[1-9]|1[0-2])/[0-9]{4}" required></div>
+          <div><label for="record-time">Hora</label><input id="record-time" name="time" type="time"></div>
+        </div>
+        <div class="form-row">
+          <div><label for="record-profile">Pessoa</label><select id="record-profile" name="profile"></select></div>
+          <div><label for="record-cost">Despesa (€)</label><input id="record-cost" name="cost" type="number" min="0" step="0.01" placeholder="0,00"></div>
+        </div>
+        <label for="record-notes">Notas</label>
+        <textarea id="record-notes" name="notes" rows="2" maxlength="500" placeholder="Clínica, médico, preparação ou observações…"></textarea>
+        <div class="attachment-actions"><label for="record-photo" class="upload-label"><span class="upload-symbol">＋</span><span id="photo-label">Escolher imagem ou PDF<small>Documento guardado apenas neste dispositivo</small></span></label><button type="button" class="button button-light camera-button" data-action="capture-document">Fotografar documento<small>A app pedirá autorização para usar a câmara</small></button></div>
+        <div id="camera-panel" class="camera-panel hidden">
+          <video id="camera-video" autoplay muted playsinline aria-label="Pré-visualização da câmara"></video>
+          <div class="camera-actions"><button type="button" class="button button-primary" data-action="take-photo">Tirar fotografia</button><button type="button" class="button button-light hidden" data-action="native-camera" id="native-camera-button">Usar câmara do dispositivo</button><button type="button" class="button button-light" data-action="cancel-camera">Cancelar câmara</button></div>
+        </div>
+        <input id="record-photo" class="visually-hidden" name="photo" type="file" accept="image/*,.pdf,application/pdf">
+        <input id="record-camera" class="visually-hidden" type="file" accept="image/*" capture="environment">
+        <div id="photo-preview-wrap" class="photo-preview-wrap hidden"><img id="photo-preview" alt="Pré-visualização do documento"><div id="pdf-preview-wrap" class="pdf-preview-wrap hidden"><iframe id="pdf-preview" title="Pré-visualização do PDF"></iframe><span id="pdf-name"></span><a id="pdf-download" class="text-button" target="_blank" rel="noopener">Abrir PDF</a></div><button type="button" class="text-button" data-action="remove-photo">Remover documento</button></div>
+        <button type="button" id="ocr-button" class="button button-light hidden" data-action="read-document">Ler documento e preencher dados</button>
+        <p id="ocr-status" class="ocr-status" aria-live="polite"></p>
+        <div class="modal-actions"><button type="button" class="button button-light" data-action="close-dialog">Cancelar</button><button type="submit" class="button button-primary">Guardar registo</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="profile-dialog" class="modal-dialog">
+      <form id="profile-form" class="modal-card">
+        <div class="modal-heading">
+          <div><p class="eyebrow">O SEU AGREGADO</p><h2 id="profile-dialog-title">Novo perfil</h2></div>
+          <button type="button" class="icon-button" data-action="close-dialog" aria-label="Fechar">×</button>
+        </div>
+        <label for="profile-name">Nome completo *</label><input id="profile-name" name="name" maxlength="100" required>
+        <div class="form-row"><div><label for="profile-phone">Telefone</label><input id="profile-phone" name="phone" type="tel"></div><div><label for="profile-email">Email</label><input id="profile-email" name="email" type="email"></div></div>
+        <label for="profile-address">Morada</label><input id="profile-address" name="address" maxlength="150" autocomplete="address-line1">
+        <div class="form-row"><div><label for="profile-locality">Localidade</label><input id="profile-locality" name="locality" maxlength="100" autocomplete="address-level4"></div><div><label for="profile-postal-code">Código Postal</label><input id="profile-postal-code" name="postalCode" maxlength="20" autocomplete="postal-code"></div></div>
+        <label for="profile-city">Cidade</label><input id="profile-city" name="city" maxlength="100" autocomplete="address-level2">
+        <div class="form-row"><div><label for="profile-health-number">Número de utente</label><input id="profile-health-number" name="healthNumber" maxlength="30"></div><div><label for="profile-social-number">N.º Segurança Social</label><input id="profile-social-number" name="socialNumber" maxlength="30"></div></div>
+        <div class="modal-actions"><button type="button" class="button button-light" data-action="close-dialog">Cancelar</button><button type="submit" class="button button-primary">Guardar perfil</button></div>
+      </form>
+    </dialog>
+    <dialog id="profile-pin-dialog" class="modal-dialog">
+      <form id="profile-pin-form" class="modal-card">
+        <div class="modal-heading">
+          <div><p class="eyebrow">ACESSO INDIVIDUAL</p><h2>Definir PIN do perfil</h2></div>
+          <button type="button" class="icon-button" data-action="close-dialog" aria-label="Fechar">×</button>
+        </div>
+        <label for="profile-pin-target">Perfil</label><select id="profile-pin-target" name="profile" required></select>
+        <label for="profile-pin-new">Novo PIN de 6 dígitos</label><input id="profile-pin-new" name="pin" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
+        <label for="profile-pin-confirm">Confirmar PIN</label><input id="profile-pin-confirm" name="confirm" type="password" inputmode="numeric" autocomplete="new-password" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
+        <p class="form-error" id="profile-pin-error" role="alert"></p>
+        <p class="pin-note">Este PIN só identifica o perfil durante uma sessão iniciada pelo responsável. Não substitui o PIN mestre nem cria uma barreira criptográfica entre perfis.</p>
+        <div class="modal-actions"><button type="button" class="button button-light" data-action="close-dialog">Cancelar</button><button type="submit" class="button button-primary">Guardar PIN</button></div>
+      </form>
+    </dialog>
+    <dialog id="profile-login-dialog" class="modal-dialog">
+      <form id="profile-login-form" class="modal-card">
+        <div class="modal-heading">
+          <div><p class="eyebrow">ACESSO AO PERFIL</p><h2>Entrar como familiar</h2></div>
+          <button type="button" class="icon-button" data-action="close-dialog" aria-label="Fechar">×</button>
+        </div>
+        <p class="muted">O responsável deve abrir primeiro o cofre com o PIN mestre.</p>
+        <label for="profile-login-target">Perfil</label><select id="profile-login-target" name="profile" required></select>
+        <label for="profile-login-pin">PIN do perfil</label><input id="profile-login-pin" name="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
+        <p class="form-error" id="profile-login-error" role="alert"></p>
+        <div class="modal-actions"><button type="button" class="button button-light" data-action="close-dialog">Cancelar</button><button type="submit" class="button button-primary">Entrar no perfil</button></div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
